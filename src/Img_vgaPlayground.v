@@ -60,6 +60,7 @@ module tt_um_vga_example (
 
 reg [7:0] img[0:76799];
 reg [7:0] img2[0:76799];
+reg [7:0] img3[0:76799];
 
 wire [16:0] mem_index;
 wire [16:0] shifted_index;
@@ -71,9 +72,9 @@ reg [9:0] frames;
 
 // Memory initialization
 initial begin
-    $readmemh("../data/bg1", img);
-    $readmemh("../data/bg2", img2);
-    $readmemh("../data/bg3", img3);
+    $readmemh("../data/bg1.mem", img);
+    $readmemh("../data/bg2.mem", img2);
+    $readmemh("../data/bg3.mem", img3);
 end
 
 // Normal image address
