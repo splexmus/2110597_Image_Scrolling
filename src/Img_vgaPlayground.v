@@ -5,7 +5,7 @@
 
 
  - Modified by Pongsgon Vichitvejpaisal to
-  load 320x240 8-bit RGB332 color images
+  load 320x240 6-bit RGB222 color images
  */
 
 `default_nettype none
@@ -58,14 +58,14 @@ module tt_um_vga_example (
       .vpos(pix_y)
   );
 
-reg [7:0] img[0:76799];
-reg [7:0] img2[0:76799];
-reg [7:0] img3[0:76799];
+reg [5:0] img[0:76799];
+reg [5:0] img2[0:76799];
+reg [5:0] img3[0:76799];
 
 wire [16:0] mem_index;
 wire [16:0] shifted_index;
 
-wire [7:0] color;
+wire [5:0] color;
 
 reg [9:0] holded_frame;
 reg [9:0] frames;
@@ -87,7 +87,7 @@ assign shifted_index =
 
 // Image selection
 assign color =
-    (!video_active) ? 8'b00000000 :
+    (!video_active) ? 6'b000000 :
     (pix_x > frames) ? img[shifted_index] :
                        img2[mem_index];
 
@@ -113,8 +113,8 @@ always @(posedge clk) begin
 end
 
 // VGA output
-assign R = color[7:6];
-assign G = color[4:3];
+assign R = color[5:4];
+assign G = color[3:2];
 assign B = color[1:0];
 
 
