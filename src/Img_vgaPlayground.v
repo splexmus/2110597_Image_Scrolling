@@ -71,8 +71,9 @@ reg [9:0] frames;
 
 // Memory initialization
 initial begin
-    $readmemh("../data/bg1_dithering.mem", img);
-    $readmemh("../data/bg1.mem", img2);
+    $readmemh("../data/bg1", img);
+    $readmemh("../data/bg2", img2);
+    $readmemh("../data/bg3", img3);
 end
 
 // Normal image address

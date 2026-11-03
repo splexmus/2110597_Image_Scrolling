@@ -24,8 +24,8 @@ def image_to_mem(image_path, mem_path):
                 mem_file.write(f"{rgb332:02X}\n")
 
 
-image_to_mem(ROOT / "scripts/img/IMG_3728-dithered.png", ROOT / "data/bg1.mem")
-image_to_mem(
-    ROOT / "scripts/img/IMG_3729-dithered.png", ROOT / "data/bg1_dithering.mem"
+image_to_mem(ROOT / "scripts/img/IMG_3729-dithered.png", ROOT / "data/bg1.mem")
+image_to_mem(ROOT / "scripts/img/IMG_3728-dithered.png", ROOT / "data/bg2.mem")
+image_to_mem(ROOT / "scripts/img/IMG_3727-dithered.png", ROOT / "data/bg3.mem"
 )
 print(f"Wrote two {WIDTH}x{HEIGHT} 8-bit RGB332 memory files.")
