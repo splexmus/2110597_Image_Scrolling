@@ -85,7 +85,7 @@ wire inp_b, inp_y, inp_select, inp_start, inp_up, inp_down, inp_left, inp_right,
   );
 
   wire _unused_gamepad = &{inp_b, inp_y, inp_select, inp_start, inp_up,
-                            inp_down, inp_left, inp_right, inp_x,
+                            inp_down, inp_left, inp_a, inp_x,
                             inp_l, inp_r, inp_present};
 
 reg [5:0] img[0:76799];
@@ -112,12 +112,13 @@ reg [9:0] holded_frame;
 reg [9:0] frames;
 reg [9:0] frames_2;
 reg [9:0] frames_3;
-reg       img_moving_up;
 reg [9:0] mario_x;
 
-localparam MARIO_WIDTH = 16;
-localparam MARIO_HEIGHT = 12;
-localparam MARIO_Y = 452;
+localparam MARIO_SOURCE_WIDTH = 16;
+localparam MARIO_SCALE = 5;
+localparam MARIO_WIDTH = 80;
+localparam MARIO_HEIGHT = 60;
+localparam MARIO_Y = 420;
 
 // Memory initialization
 initial begin
@@ -147,7 +148,8 @@ assign mario_visible =
     (pix_x >= mario_x) && (pix_x < mario_x + MARIO_WIDTH) &&
     (pix_y >= MARIO_Y) && (pix_y < MARIO_Y + MARIO_HEIGHT);
 assign mario_index = mario_visible
-    ? (pix_y - MARIO_Y) * MARIO_WIDTH + (pix_x - mario_x)
+    ? ((pix_y - MARIO_Y) / MARIO_SCALE) * MARIO_SOURCE_WIDTH
+        + ((pix_x - mario_x) / MARIO_SCALE)
     : 0;
 assign mario_color = mario[mario_index];
 
@@ -166,33 +168,18 @@ always @(posedge clk) begin
         frames <= 0;
         frames_2 <= 0;
         frames_3 <= 0;
-        img_moving_up <= 1'b1;
         mario_x <= 0;
     end
     else if ((pix_x == 0) && (pix_y == 0)) begin
         if (holded_frame == 1) begin
             holded_frame <= 0;
 
-            frames_2 <= (frames_2 >= 638) ? 0 : frames_2 + 2;
-            frames_3 <= (frames_3 >= 636) ? 0 : frames_3 + 4;
-            if (inp_a)
+            if (inp_right) begin
+                frames <= (frames >= 220) ? 220 : frames + 1;
+                frames_2 <= (frames_2 >= 638) ? 638 : frames_2 + 2;
+                frames_3 <= (frames_3 >= 636) ? 636 : frames_3 + 4;
                 mario_x <= (mario_x >= DISPLAY_WIDTH - MARIO_WIDTH)
-                    ? 0 : mario_x + 1;
-
-            if (img_moving_up) begin
-                if (frames >= 220) begin
-                    frames <= 218;
-                    img_moving_up <= 1'b0;
-                end else begin
-                    frames <= frames + 1;
-                end
-            end else begin
-                if (frames <= 2) begin
-                    frames <= 0;
-                    img_moving_up <= 1'b1;
-                end else begin
-                    frames <= frames - 1;
-                end
+                    ? DISPLAY_WIDTH - MARIO_WIDTH : mario_x + 1;
             end
         end else begin
             holded_frame <= holded_frame + 1'b1;
