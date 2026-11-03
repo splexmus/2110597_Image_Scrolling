@@ -96,12 +96,10 @@ reg [5:0] mario[0:191];
 wire [16:0] shifted_sky;
 wire [16:0] shifted_2;
 wire [16:0] shifted_3;
-wire [10:0] shifted_y_sum;
-wire [10:0] shifted_2_sum;
-wire [10:0] shifted_3_sum;
-wire [9:0] wrapped_y;
-wire [9:0] wrapped_2_x;
-wire [9:0] wrapped_3_x;
+wire [10:0] shifted_sky_y;
+wire [9:0] wrapped_sky_y;
+wire [10:0] scrolled_2_x;
+wire [10:0] scrolled_3_x;
 wire       mario_visible;
 wire [7:0] mario_index;
 wire [5:0] mario_color;
@@ -112,13 +110,14 @@ reg [9:0] holded_frame;
 reg [9:0] frames;
 reg [9:0] frames_2;
 reg [9:0] frames_3;
-reg [9:0] mario_x;
+reg       sky_moving_up;
 
 localparam MARIO_SOURCE_WIDTH = 16;
 localparam MARIO_SCALE = 5;
 localparam MARIO_WIDTH = 80;
 localparam MARIO_HEIGHT = 60;
-localparam MARIO_Y = 420;
+localparam MARIO_X = 0;
+localparam MARIO_Y = 390;
 
 // Memory initialization
 initial begin
@@ -128,28 +127,30 @@ initial begin
     $readmemh("../data/mario.mem", mario);
 end
 
-// Shifted image address
-assign shifted_y_sum = {1'b0, pix_y} + {1'b0, frames};
-assign wrapped_y = (shifted_y_sum >= 480) ? shifted_y_sum - 480 : shifted_y_sum[9:0];
+// Increasing the vertical offset moves the sky up; decreasing it moves down.
+assign shifted_sky_y = {1'b0, pix_y} + {1'b0, frames};
+assign wrapped_sky_y = (shifted_sky_y >= 480)
+    ? shifted_sky_y - 480 : shifted_sky_y[9:0];
 assign shifted_sky =
-    (wrapped_y / 2) * 320 + pix_x / 2;
+    (wrapped_sky_y / 2) * 320 + pix_x / 2;
 
-assign shifted_2_sum = {1'b0, pix_x} + {1'b0, frames_2};
-assign wrapped_2_x = (shifted_2_sum >= 640) ? shifted_2_sum - 640 : shifted_2_sum[9:0];
+// Adding horizontal offsets makes these layers move visually to the left.
+assign scrolled_2_x = {1'b0, pix_x} + {1'b0, frames_2};
 assign shifted_2 =
-    (pix_y / 2) * 320 + wrapped_2_x / 2;
+    (pix_y / 2) * 320
+        + ((scrolled_2_x >= 640) ? scrolled_2_x - 640 : scrolled_2_x) / 2;
 
-assign shifted_3_sum = {1'b0, pix_x} + {1'b0, frames_3};
-assign wrapped_3_x = (shifted_3_sum >= 640) ? shifted_3_sum - 640 : shifted_3_sum[9:0];
+assign scrolled_3_x = {1'b0, pix_x} + {1'b0, frames_3};
 assign shifted_3 =
-    (pix_y / 2) * 320 + wrapped_3_x / 2;
+    (pix_y / 2) * 320
+        + ((scrolled_3_x >= 640) ? scrolled_3_x - 640 : scrolled_3_x) / 2;
 
 assign mario_visible =
-    (pix_x >= mario_x) && (pix_x < mario_x + MARIO_WIDTH) &&
+    (pix_x >= MARIO_X) && (pix_x < MARIO_X + MARIO_WIDTH) &&
     (pix_y >= MARIO_Y) && (pix_y < MARIO_Y + MARIO_HEIGHT);
 assign mario_index = mario_visible
     ? ((pix_y - MARIO_Y) / MARIO_SCALE) * MARIO_SOURCE_WIDTH
-        + ((pix_x - mario_x) / MARIO_SCALE)
+        + ((pix_x - MARIO_X) / MARIO_SCALE)
     : 0;
 assign mario_color = mario[mario_index];
 
@@ -168,18 +169,31 @@ always @(posedge clk) begin
         frames <= 0;
         frames_2 <= 0;
         frames_3 <= 0;
-        mario_x <= 0;
+        sky_moving_up <= 1'b1;
     end
     else if ((pix_x == 0) && (pix_y == 0)) begin
         if (holded_frame == 1) begin
             holded_frame <= 0;
 
+            if (sky_moving_up) begin
+                if (frames >= 220) begin
+                    frames <= 219;
+                    sky_moving_up <= 1'b0;
+                end else begin
+                    frames <= frames + 1;
+                end
+            end else begin
+                if (frames == 0) begin
+                    frames <= 1;
+                    sky_moving_up <= 1'b1;
+                end else begin
+                    frames <= frames - 1;
+                end
+            end
+
             if (inp_right) begin
-                frames <= (frames >= 220) ? 220 : frames + 1;
                 frames_2 <= (frames_2 >= 638) ? 638 : frames_2 + 2;
                 frames_3 <= (frames_3 >= 636) ? 636 : frames_3 + 4;
-                mario_x <= (mario_x >= DISPLAY_WIDTH - MARIO_WIDTH)
-                    ? DISPLAY_WIDTH - MARIO_WIDTH : mario_x + 1;
             end
         end else begin
             holded_frame <= holded_frame + 1'b1;
