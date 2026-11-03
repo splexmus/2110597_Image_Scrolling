@@ -18,6 +18,7 @@ project:
   source_files:
     - "Img_vgaPlayground.v"
     - "hsync_generator.v"
+    - "gamepad_pmod.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
